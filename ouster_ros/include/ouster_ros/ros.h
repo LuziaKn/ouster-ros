@@ -68,6 +68,33 @@ void scan_to_cloud(const ouster::XYZLut& xyz_lut,
                    ouster_ros::Cloud& cloud);
 
 /**
+ * Populate a PCL point cloud from a LidarScan
+ * @param xyz_lut lookup table from sensor beam angles (see lidar_scan.h)
+ * @param scan_ts scan start used to caluclate relative timestamps for points
+ * @param ls input lidar data
+ * @param cloud output pcl pointcloud to populate
+ *
+ * Note That this is a modified piece of code to support removing points within a certain distance
+ */
+void scan_to_cloud_v2(const ouster::XYZLut& xyz_lut,
+                   ouster::LidarScan::ts_t scan_ts, const ouster::LidarScan& ls,
+                   ouster_ros::Cloud& cloud);
+
+/**
+ * Populate a PCL point cloud from a LidarScan
+ * @param xyz_lut lookup table from sensor beam angles (see lidar_scan.h)
+ * @param scan_ts scan start used to caluclate relative timestamps for points
+ * @param ls input lidar data
+ * @param cloud output pcl pointcloud to populate
+ *
+ * Note That this is a modified piece of code to support removing points within a certain distance
+ */
+void scan_to_cloud_full_v2(const ouster::XYZLut& xyz_lut,
+                   ouster::LidarScan::ts_t scan_ts, const ouster::LidarScan& ls,
+                   ouster_ros::Cloud& cloud);
+
+
+/**
  * Serialize a PCL point cloud to a ROS message
  * @param cloud the PCL point cloud to convert
  * @param timestamp the timestamp to give the resulting ROS message
@@ -76,6 +103,10 @@ void scan_to_cloud(const ouster::XYZLut& xyz_lut,
  */
 sensor_msgs::PointCloud2 cloud_to_cloud_msg(const Cloud& cloud, ns timestamp,
                                             const std::string& frame);
+
+sensor_msgs::PointCloud2 cloud_to_cloud_msg_v2(const Cloud& cloud,
+                                            const std::string& frame);
+
 
 /**
  * Convert transformation matrix return by sensor to ROS transform

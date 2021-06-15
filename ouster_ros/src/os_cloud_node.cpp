@@ -49,12 +49,14 @@ int main(int argc, char** argv) {
 
     auto pf = sensor::get_format(info);
 
+    //auto lidar_full_pub = nh.advertise<sensor_msgs::PointCloud2>("all_points", 10);
     auto lidar_pub = nh.advertise<sensor_msgs::PointCloud2>("points", 10);
     auto imu_pub = nh.advertise<sensor_msgs::Imu>("imu", 100);
 
     auto xyz_lut = ouster::make_xyz_lut(info);
 
     Cloud cloud{W, H};
+    Cloud cloud_full{W, H};
     ouster::LidarScan ls{W, H};
 
     ouster::ScanBatcher batch(W, pf);
@@ -64,11 +66,16 @@ int main(int argc, char** argv) {
             auto h = std::find_if(
                 ls.headers.begin(), ls.headers.end(), [](const auto& h) {
                     return h.timestamp != std::chrono::nanoseconds{0};
-                });
+                    //return h.timestamp != ros::Time::now();
+                 });
             if (h != ls.headers.end()) {
+                //scan_to_cloud_v2(xyz_lut, h->timestamp, ls, cloud);
+                //scan_to_cloud_full_v2(xyz_lut, h->timestamp, ls, cloud_full);
                 scan_to_cloud(xyz_lut, h->timestamp, ls, cloud);
-                lidar_pub.publish(ouster_ros::cloud_to_cloud_msg(
-                    cloud, h->timestamp, sensor_frame));
+                 //lidar_pub.publish(ouster_ros::cloud_to_cloud_msg(
+                //    cloud, h->timestamp, sensor_frame));
+                lidar_pub.publish(ouster_ros::cloud_to_cloud_msg_v2(cloud, sensor_frame));
+                //lidar_full_pub.publish(ouster_ros::cloud_to_cloud_msg_v2(cloud_full, sensor_frame));
             }
         }
     };
