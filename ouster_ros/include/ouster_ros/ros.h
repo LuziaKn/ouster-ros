@@ -23,7 +23,8 @@
 namespace ouster_ros {
 
 namespace sensor = ouster::sensor;
-using Cloud = pcl::PointCloud<Point>;
+//using Cloud = pcl::PointCloud<Point>;
+using Cloud = pcl::PointCloud<Point_Small>;
 using ns = std::chrono::nanoseconds;
 
 /**
@@ -92,6 +93,11 @@ void scan_to_cloud_v2(const ouster::XYZLut& xyz_lut,
 void scan_to_cloud_full_v2(const ouster::XYZLut& xyz_lut,
                    ouster::LidarScan::ts_t scan_ts, const ouster::LidarScan& ls,
                    ouster_ros::Cloud& cloud);
+
+void scan_to_reduced_cloud(const ouster::XYZLut& xyz_lut,
+                   ouster::LidarScan::ts_t scan_ts, const ouster::LidarScan& ls,
+                   ouster_ros::Cloud& cloud);
+
 
 
 /**

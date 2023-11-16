@@ -72,7 +72,8 @@ int main(int argc, char** argv) {
                 //scan_to_cloud_v2(xyz_lut, h->timestamp, ls, cloud);
                 //scan_to_cloud_full_v2(xyz_lut, h->timestamp, ls, cloud_full);
                 scan_to_cloud(xyz_lut, h->timestamp, ls, cloud);
-                 //lidar_pub.publish(ouster_ros::cloud_to_cloud_msg(
+                scan_to_reduced_cloud(xyz_lut, h->timestamp, ls, cloud); 
+	        //lidar_pub.publish(ouster_ros::cloud_to_cloud_msg(
                 //    cloud, h->timestamp, sensor_frame));
                 lidar_pub.publish(ouster_ros::cloud_to_cloud_msg_v2(cloud, sensor_frame));
                 //lidar_full_pub.publish(ouster_ros::cloud_to_cloud_msg_v2(cloud_full, sensor_frame));

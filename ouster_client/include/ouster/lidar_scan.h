@@ -127,6 +127,109 @@ class LidarScan {
     }
 };
 
+
+class LidarScan_Reduced {
+   public:
+    static constexpr int N_FIELDS = 4;
+
+    using raw_t = uint32_t;
+    using ts_t = std::chrono::nanoseconds;
+    using data_t = Eigen::Array<raw_t, Eigen::Dynamic, N_FIELDS>;
+
+    using DynStride = Eigen::Stride<Eigen::Dynamic, Eigen::Dynamic>;
+
+    /** XYZ coordinates with dimensions arranged contiguously in columns */
+    using Points = Eigen::Array<double, Eigen::Dynamic, 3>;
+
+    /** Data fields reported per channel */
+    enum Field {REFLECTIVITY };
+
+    /** Measurement block information, other than the channel data */
+    struct BlockHeader {
+        ts_t timestamp;
+        uint32_t encoder;
+        uint32_t status;
+    };
+
+    /* Members variables: use with caution, some of these will become private */
+    std::ptrdiff_t w{0};
+    std::ptrdiff_t h{0};
+    data_t data{};
+    std::vector<BlockHeader> headers{};
+    int32_t frame_id{-1};
+
+    /** The default constructor creates an invalid 0 x 0 scan */
+    LidarScan_Reduced() = default;
+
+    /**
+     * Initialize an empty scan with the given horizontal / vertical resolution.
+     *
+     * @param w horizontal resoulution, i.e. the number of measurements per scan
+     * @param h vertical resolution, i.e. the number of channels
+     */
+    LidarScan_Reduced(size_t w, size_t h)
+        : w{static_cast<std::ptrdiff_t>(w)},
+          h{static_cast<std::ptrdiff_t>(h)},
+          data{w * h, N_FIELDS},
+          headers{w, BlockHeader{ts_t{0}, 0, 0}} {};
+
+    /**
+     * Access timestamps as a vector.
+     *
+     * @returns copy of the measurement timestamps as a vector
+     */
+    std::vector<LidarScan_Reduced::ts_t> timestamps() const {
+        std::vector<LidarScan_Reduced::ts_t> res;
+        res.reserve(headers.size());
+        for (const auto& h : headers) res.push_back(h.timestamp);
+        return res;
+    }
+
+    /**
+     * Access measurement block header fields.
+     *
+     * @return the header values for the specified measurement id
+     */
+    BlockHeader& header(size_t m_id) { return headers.at(m_id); }
+
+    /** @copydoc header(size_t m_id) */
+    const BlockHeader& header(size_t m_id) const { return headers.at(m_id); }
+
+    /**
+     * Access measurement block data.
+     *
+     * @param m_id the measurement id of the desired block
+     * @return a view of the measurement block data
+     */
+    Eigen::Map<data_t, Eigen::Unaligned, DynStride> block(size_t m_id) {
+        return Eigen::Map<data_t, Eigen::Unaligned, DynStride>(
+            data.row(m_id).data(), h, N_FIELDS, {w * h, w});
+    }
+
+    /** @copydoc block(size_t m_id) */
+    Eigen::Map<const data_t, Eigen::Unaligned, DynStride> block(
+        size_t m_id) const {
+        return Eigen::Map<const data_t, Eigen::Unaligned, DynStride>(
+            data.row(m_id).data(), h, N_FIELDS, {w * h, w});
+    }
+
+    /**
+     * Access a lidar data field.
+     *
+     * @param f the field to view
+     * @return a view of the field data
+     */
+    Eigen::Map<img_t<raw_t>> field(Field f) {
+        return Eigen::Map<img_t<raw_t>>(data.col(f).data(), h, w);
+    }
+
+    /** @copydoc field(Field f) */
+    Eigen::Map<const img_t<raw_t>> field(Field f) const {
+        return Eigen::Map<const img_t<raw_t>>(data.col(f).data(), h, w);
+    }
+};
+
+
 /** Equality for column headers. */
 inline bool operator==(const LidarScan::BlockHeader& a,
                        const LidarScan::BlockHeader& b) {
@@ -192,7 +295,7 @@ inline XYZLut make_xyz_lut(const sensor::sensor_info& sensor) {
  * @return cartesian points where ith row is a 3D point which corresponds
  *         to ith pixel in LidarScan where i = row * w + col
  */
-LidarScan::Points cartesian(const LidarScan& scan, const XYZLut& lut);
+LidarScan::Points cartesian(const LidarScan_Reduced& scan, const XYZLut& lut);
 
 /**
  * Generate a destaggered version of a channel field.
